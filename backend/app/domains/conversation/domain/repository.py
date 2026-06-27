@@ -1,0 +1,9 @@
+from typing import Optional, Protocol
+
+from app.domains.conversation.domain.models import Conversation
+
+
+class ConversationRepository(Protocol):
+    def get(self, conversation_id: str) -> Optional[Conversation]: ...
+    def save(self, conversation: Conversation) -> None: ...
+    def exists(self, conversation_id: str) -> bool: ...
