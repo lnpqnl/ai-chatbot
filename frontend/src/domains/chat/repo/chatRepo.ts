@@ -1,3 +1,5 @@
+import { API_CHAT_URL } from '../config'
+
 export interface StreamCallbacks {
   onToken: (token: string) => void
   onToolCall: (name: string, args: Record<string, unknown>) => void
@@ -10,7 +12,7 @@ export async function streamChat(message: string, conversationId: string | null,
   const body: Record<string, string> = { message }
   if (conversationId) body.conversation_id = conversationId
 
-  const response = await fetch('/api/chat', {
+  const response = await fetch(API_CHAT_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

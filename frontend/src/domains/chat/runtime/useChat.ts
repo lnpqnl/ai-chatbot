@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react'
 import { streamChat } from '../repo/chatRepo'
+import { appendUserMessage, updateLastAssistant, appendToolCall, resolveToolResult } from '../service/chatService'
 import type { Message } from '../types'
 
 export function useChat() {
@@ -14,34 +15,20 @@ export function useChat() {
     if (!text || loading) return
 
     setInput('')
-    setMessages(prev => [...prev, { role: 'user', content: text }])
+    setMessages(prev => appendUserMessage(prev, text))
     setLoading(true)
     assistantRef.current = ''
-
-    setMessages(prev => [...prev, { role: 'assistant', content: '' }])
 
     await streamChat(text, conversationId, {
       onToken(token) {
         assistantRef.current += token
-        setMessages(prev => {
-          const next = [...prev]
-          next[next.length - 1] = { role: 'assistant', content: assistantRef.current }
-          return next
-        })
+        setMessages(prev => updateLastAssistant(prev, assistantRef.current))
       },
       onToolCall(name) {
-        setMessages(prev => [...prev, { role: 'tool', content: `🔧 调用工具: ${name}...` }])
+        setMessages(prev => appendToolCall(prev, name))
       },
       onToolResult(name, result) {
-        setMessages(prev => {
-          const next = [...prev]
-          const lastToolIdx = next.findLastIndex(m => m.role === 'tool')
-          if (lastToolIdx >= 0) {
-            next[lastToolIdx] = { role: 'tool', content: `✅ ${name}: ${result}` }
-          }
-          next.push({ role: 'assistant', content: '' })
-          return next
-        })
+        setMessages(prev => resolveToolResult(prev, name, result))
         assistantRef.current = ''
       },
       onDone(id) {
